@@ -16,16 +16,30 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN is not set")
 
+ALLOWED_USER_ID = os.getenv("ALLOWED_USER_ID")
+
+if not BOT_TOKEN:
+    raise RuntimeError("BOT_TOKEN is not set")
+
+if not ALLOWED_USER_ID:
+    raise RuntimeError("ALLOWED_USER_ID is not set")
+
+ALLOWED_USER_ID = int(ALLOWED_USER_ID)
+
 dp = Dispatcher()
 
 @dp.message(CommandStart())
 async def start_handler(message: Message):
+    if not is_authorized(message):
+        return
     await message.answer(
         "Привет! Я учебный DevOps-бот."
     )
 
 @dp.message(Command("history"))
 async def messages_handler(message: Message):
+    if not is_authorized(message):
+        return
     messages = get_messages()
 
     if not messages:
@@ -45,6 +59,8 @@ async def messages_handler(message: Message):
 
 @dp.message()
 async def message_handler(message: Message):
+    if not is_authorized(message):
+        return
     if message.text is None:
         await message.answer(
             "Я пока умею сохранять только текстовые сообщения."
@@ -86,6 +102,8 @@ async def main():
     finally:
         await bot.session.close()
 
+def is_authorized(message: Message) -> bool:
+    return message.from_user.id == ALLOWED_USER_ID
 
 if __name__ == "__main__":
     asyncio.run(main())
